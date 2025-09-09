@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//La funcion recibe una matriz 2D, un vector, y el tamaño de la matriz.
 double *diagonal(double **D, double *b, int size);
+
 
 int main(){
 
