@@ -5,6 +5,10 @@
 *.o
 a.out
 
+# Ignore common names
+problem
+main
+
 # --- Ignore Program-Generated Output Files ---
 # You probably don't need to version control the results your programs print.
 output.txt
