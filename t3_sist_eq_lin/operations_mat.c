@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#define MATRIX_TOLERANCE 1e-12
+#define MATRIX_TOLERANCE 1e-14
 
 
 double **read_matrix(char *source, int n){

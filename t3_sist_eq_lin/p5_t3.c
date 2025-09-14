@@ -19,9 +19,7 @@ int main(){
 
     //display_matrix(matrix, n);
     free_matrix(matrix, n);
-
     display_vec(x, n);
-
     free_vec(x);
 
 
