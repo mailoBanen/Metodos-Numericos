@@ -1,6 +1,8 @@
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#define MAT_TOLERANCE 1e-9
 
 double **read_matrix(char *source, int n){
 
@@ -32,8 +34,6 @@ double **read_matrix(char *source, int n){
     fclose(file);
 
     return arr;
-
-
 }
 
 double **create_matrix(int n){
@@ -77,8 +77,42 @@ void display_matrix(double **M, int n){
         }
         printf("\n");
     }
+    printf("\n");
 }
 
+void multiply(double **A, double **B, double **output, int n){
+
+    for(int i=0; i<n; i++){
+        for(int j=0; j<n; j++){
+            
+            double valor = 0;
+            for(int k=0; k<n; k++){
+
+                valor += A[i][k] * B[k][j];
+
+            }
+
+            output[i][j] = valor;
+
+        }
+    }
+}
+
+int is_equal(double **A, double **B, int n){
 
 
+    for(int i=0; i<n; i++){
+        for(int j=0; j<n; j++){
+
+            if(fabs(A[i][j] - B[i][j]) > MAT_TOLERANCE){
+
+                printf("Las matrices no son iguales.\n");
+                printf("A[%d][%d] = %f  B[%d][%d] = %f\n", i, j, A[i][j], i, j, B[i][j]);
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
 
