@@ -8,25 +8,34 @@ int main(){
 
     int n=50;
     double **A =  read_matrix("sistemasTarea4/SPD.txt", n);
+    double *b = read_vec("sistemasTarea4/b_spd.txt", n);
      
-    
-    double **L, **U;
+    double **L, **LT;
 
+    /*Creo mis matrices L y LT*/
     L = create_matrix(n);
-    U = create_matrix(n);
+    LT = create_matrix(n);
 
-    cholesky(A, L, U, n);
-    double **R = create_matrix(n);
-    multiply(L, U, R, n);
+    /*Factorizo con cholesky*/
+    cholesky(A, L, LT, n);
 
-    if(is_equal(A, R, n)){
-        printf("Son iguales\n");
-    }
+    double *x = create_vec(n);
+
+    /*Resuelvo el sistema con cholesky*/
+    solve_LU(L, LT, x, b, n);
+
+    double *r = create_vec(n);
+    matXvec(A, x, r, n);
+
+    /*Confirmo que la solucion sea igual al vector b*/
+    is_equal_v(b, r, n);
 
     free_matrix(A, n);
     free_matrix(L, n);
-    free_matrix(U, n);
-    free_matrix(R, n);
+    free_matrix(LT, n);
+    free(r);
+    free(x);
+
 
     return 0;
     
