@@ -124,9 +124,11 @@ void solve_LU(double **L, double **U, double *x, double *b, int n){
 
 void cholesky(double **A, double **L, double **U, int n){
 
+    /*Manualmente los primeros valores*/
     L[0][0] = sqrt(A[0][0]);
     U[0][0] = sqrt(A[0][0]);
 
+    /*Calculo la primera columna*/
     for(int i=1; i<n; i++){
 
         L[i][0] = A[i][0]/L[0][0];
@@ -140,11 +142,12 @@ void cholesky(double **A, double **L, double **U, int n){
         exit(2);
     }  
 
-
+    /*Empiezo a partir del segundo elemento*/
     for(int j=1; j<n-1; j++){
 
         double suma = 0;
 
+        /*Primero los valores de la diagonal*/
         for (int k = 0; k < j; k++)
         {
             suma += L[j][k] * L[j][k];
@@ -153,6 +156,7 @@ void cholesky(double **A, double **L, double **U, int n){
         L[j][j] = sqrt(A[j][j] - suma);
         U[j][j] = L[j][j];
 
+        /*Despues los debajo de la diagonal*/
         for(int i=j+1; i<n; i++){
             
             double suma = 0;
@@ -184,6 +188,7 @@ void cholesky(double **A, double **L, double **U, int n){
 
     }
 
+    /*El ultimo se calcula manualmente*/
     L[n-1][n-1] = sqrt(A[n-1][n-1] - suma);
     U[n-1][n-1] = L[n-1][n-1];
 
