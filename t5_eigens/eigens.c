@@ -137,6 +137,8 @@ void solve_LU(double **L, double **U, double *x, double *b, int n){
 }
 
 
+
+
 void normalize_inf(double *v, int n){
 
     /*Busco el valor mas grande del vector*/
@@ -170,7 +172,21 @@ void normalize_l2(double *v, int n){
 
 }
 
+void diff_vecs(double *u, double *v, double *diff_vec, int n){
 
+    double max = fabs(u[0] - v[0]);
+
+    for(int i=1; i<n; i++){
+
+        double val = fabs(u[i] - v[i]);
+
+        if(val > max){
+            max = val;
+        }
+    }
+
+    (*diff_vec)=max;
+}
 
 void quitar_proj(double *v, double **e_vecs, int n_vecs, int n){
 
@@ -207,74 +223,106 @@ void quitar_proj(double *v, double **e_vecs, int n_vecs, int n){
     free(v_aux);
 }
 
-void power_method(double **A, double *x, double *lambda,  int n, int n_iters, double tol){
-
-    int k=0;
-
-    /*Creo un vector auxiliar*/
-    double *x_next = create_vec(n);
-    double max_val_next = fabs(x_next[0]);
-    double lambda_next = 0;
-    double lambda_diff = 1;
-    double x_max_diff = fabs(x_next[0]);
-
-    /*Valores para calcular el eigenvalor*/
-    double num=0, den=0;
-
-    while(k < n_iters && (lambda_diff > tol || x_max_diff > tol)){
-
-        /*Multiplico la matriz por el vector
-        y lo guardo en el siguiente*/
-        matXvec(A, x, x_next, n);
-        double max_val_next = fabs(x_next[0]);
-
-        /*Calculo lambda*/
-        dot_product(x, x_next, &num, n);
-        dot_product(x, x, &den, n);
-        lambda_next = num/den;
-
-        /*Una vez que tengo lambda, el vector siguiente*/
-        /*Obtengo el valor maximo para la primera norma infinito*/
-        for(int i=1; i<n; i++){
-
-            if(fabs(x_next[i]) > max_val_next){
-
-                max_val_next = fabs(x_next[i]);
-
-            }
-        }
-
-        /*Cada valor lo divido entre el maximo para normalizar
-        y como el siguiente ahhora se vuelve el actual, lo guardo
-        en el vector x*/
-
-        double x_max_diff=fabs(x[0] - x_next[0]/max_val_next);
-
-        for(int i=0; i<n; i++){
-
-            x_next[i] = x_next[i] / max_val_next;
-
-            double x_diff = fabs(x[i] - x_next[i]);
-            
-            if(x_diff > x_max_diff){
-                x_max_diff = x_diff;
-            }
-
-            x[i] = x_next[i];
-
-        }
 
 
-        lambda_diff = fabs((*lambda) - lambda_next);
-    
-        (*lambda) = lambda_next;
-        k++;
-    }
-
-    printf("Se realizaron %d iteraciones con una diff de %e. y una lambda de %lf\n", k, lambda_diff, (*lambda));
-}
 
 void k_power_method(int k, double **A, double *v_0, double **eigens, int n, int n_iters, double tol){
+
+    /*Inicio con 0 valores calculados*/
+    int n_evals = 0;
+
+    /*Inicio mi contador de iteraciones*/
+    int iter=0;
+
+    /*Vector auxiliar siguiente*/
+    double *v_n = create_vec(n);
+
+    /*Mi vector inicial lo inicio como unitario*/
+    fill_vec(v_0, 1/sqrt(n), n);
+
+    /*Valor que contiene el error entre calculo
+    de los eigenvalores*/
+    double diff=tol+1;
+    double lambda_next;
+    double vec_error;
+
+
+    /*Mientras tenga menos e-valores de los que me pidieron*/
+    while(n_evals < k){
+
+        /*Inicio el vector auxiliar en cada calculo*/
+        fill_vec(v_0, 1/sqrt(n), n);
+        double lambda = 1;
+
+        /*Quito las proyecciones desde el principio*/
+        //quitar_proj(v_0, eigens, n_evals, n);
+
+        iter=0;
+        diff = tol+1;
+        vec_error = tol+1;
+
+        /*Mientras el error sea muy grande y no se haya
+        llegado a la iteracion maxima*/
+        while((diff > tol) && iter < n_iters){
+
+            /*Quito la proyeccion en v_0*/
+            quitar_proj(v_0, eigens, n_evals, n);
+
+            /*Multiplico A*v_0 = v_n*/
+            matXvec(A, v_0, v_n, n);
+
+            quitar_proj(v_n, eigens, n_evals, n);
+
+            /*Calculo lambda*/
+            double num;
+            double den;
+            dot_product(v_n, v_n, &num, n);
+            dot_product(v_0, v_n, &den, n);
+            lambda_next = num/den;
+
+            /*Normalizo v_n*/
+            normalize_l2(v_n, n);
+            quitar_proj(v_n, eigens, n_evals, n);
+
+            /*Calculo el error*/
+            diff = fabs(lambda_next - (lambda));
+            diff_vecs(v_0, v_n, &vec_error, n);
+
+            /*El siguiente ahora es el actual*/
+            for (int i = 0; i < n; i++){
+
+                v_0[i] = v_n[i];
+            }
+
+            iter++;
+        }
+
+        /*Si ya convergi a un valor salgo del ciclo
+        y guardo cada valor en su respectiva posicion
+        De 0 a n-1 filas contienen e-vectores
+        En la posicion n estan los e-valores*/
+        for(int j=0; j<n; j++){
+
+            /*Guardo el eigenvector*/
+            eigens[n_evals][j] = v_0[j];
+
+        }
+
+        /*Guardo el eigenvalor*/
+        eigens[n][n_evals] = lambda_next;
+
+        /*Aumento el contador porque ya calcule uno mas*/
+        n_evals++;
+
+    }
+}
+
+void k_inverse_power_method(int k, double **A, double *v_0, double **eigens, int n, int n_iters, double tol){
+
+    /*Calculo la matriz inversa*/
+    double **A_inv = create_matrix(n);
+    inverse_cholesky(A, A_inv, n);
+
 
     /*Inicio con 0 valores calculados*/
     int n_evals = 0;
@@ -316,15 +364,15 @@ void k_power_method(int k, double **A, double *v_0, double **eigens, int n, int 
             quitar_proj(v_0, eigens, n_evals, n);
 
             /*Multiplico A*v_0 = v_n*/
-            matXvec(A, v_0, v_n, n);
+            matXvec(A_inv, v_0, v_n, n);
 
             quitar_proj(v_n, eigens, n_evals, n);
 
             /*Calculo lambda*/
             double num;
             double den;
-            dot_product(v_n, v_n, &num, n);
-            dot_product(v_0, v_n, &den, n);
+            dot_product(v_0, v_n, &num, n);
+            dot_product(v_n, v_n, &den, n);
             lambda_next = num/den;
 
             /*Normalizo v_n*/
@@ -361,66 +409,10 @@ void k_power_method(int k, double **A, double *v_0, double **eigens, int n, int 
         n_evals++;
 
     }
-}
 
-
-void inverse_power_method(double **A_inv, double *x, double *lambda, int n, int n_iters, double tol){
-
-    int k=0;
-
-    /*Creo un vector auxiliar*/
-    double *x_next = create_vec(n);
-    double max_val_next = x_next[0];
-    double lambda_next = 0;
-    double lambda_diff = 1;
-
-    /*Valores para calcular el eigenvalor*/
-    double num=0, den=0;
-
-    while(k < n_iters && lambda_diff > tol){
-
-        /*Multiplico la matriz por el vector
-        y lo guardo en el siguiente*/
-        matXvec(A_inv, x, x_next, n);
-        double max_val_next = x_next[0];
-
-        /*Calculo lambda*/
-        dot_product(x_next, x, &num, n);
-        dot_product(x_next, x_next, &den, n);
-        lambda_next = num/den;
-
-        /*Una vez que tengo lambda, el vector siguiente*/
-        /*Obtengo el valor maximo para la primera norma infinito*/
-        for(int i=1; i<n; i++){
-
-            if(fabs(x_next[i]) > max_val_next){
-
-                max_val_next = fabs(x_next[i]);
-
-            }
-        }
-
-        /*Cada valor lo divido entre el maximo para normalizar
-        y como el siguiente ahhora se vuelve el actual, lo guardo
-        en el vector x*/
-        for(int i=0; i<n; i++){
-
-            x[i] = x_next[i] / max_val_next;
-
-        }
-
-        lambda_diff = fabs((*lambda) - lambda_next);
-    
-        (*lambda) = lambda_next;
-        k++;
-    }
-
-    printf("Se realizaron %d iteraciones.\n", k);
+    free_matrix(A_inv, n);
 
 }
-
-
-
 
 
 

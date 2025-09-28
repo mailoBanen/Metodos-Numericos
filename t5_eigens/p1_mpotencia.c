@@ -9,14 +9,13 @@
 int main(){
 
     int rows, cols;
-    double **A = read_matrix("archivos_tarea5/Eigen_5x5.txt", &rows, &cols);
-    display_matrix(A, rows);
+    double **A = read_matrix("archivos_tarea5/Eigen_50x50.txt", &rows, &cols);
 
     /*Matriz para guardar todos los valores calculados*/
     double **eigens = create_matrix(rows+1);
 
     /*Cuantos quiero calcular*/
-    int k=4;
+    int k=7;
 
     /*Vector inicial*/
     double *v_0 = create_vec(rows);
@@ -24,9 +23,15 @@ int main(){
 
     k_power_method(k, A, v_0, eigens, rows, 1000, 1e-12);
 
-    display_matrix(eigens, rows+1);
 
-    
+
+    for(int i=0; i<k; i++){
+
+        printf("%lf, ", eigens[rows][i]);
+        
+    }
+    printf("\n");
+
     free_matrix(A, rows);
     free_matrix(eigens, rows+1);
     free(v_0);
